@@ -52,6 +52,11 @@ static const int ext_chunk_size = 60000;
 static const int msg_id_size = 16;
 static const quint32 sync_margin = 86400; // allows for clocks that are off by up to a day
 
+static QSet<QByteArray> to_set(const QList<QByteArray> &L)
+{
+	return QSet<QByteArray>(L.begin(), L.end());
+}
+
 static void write_list(QDataStream &ds, const QList<QByteArray> &L)
 {
 	ds << (quint32)L.size();
@@ -364,7 +369,7 @@ void SkyNet::nodelink_failed(PICA_c2n *c2n, int error)
 void SkyNet::multilogin_event(quint64 timestamp, QString node_addr, quint16 node_port)
 {
 	emit StatusMsg(QString("%3 Detected new login of your account at node %1:%2")
-				.arg(node_addr).arg(node_port).arg(QDateTime::fromTime_t(timestamp).toString("yyyy-MM-dd hh:mm:ss")),
+				.arg(node_addr).arg(node_port).arg(QDateTime::fromSecsSinceEpoch(timestamp).toString("yyyy-MM-dd hh:mm:ss")),
 				true);
 
 	if (active_nodelink->multilogin_policy == PICA_MULTILOGIN_REPLACE)
@@ -462,7 +467,7 @@ void SkyNet::reconnect_c2c()
 		time_t t = time(NULL);
 
 		// shortcut: outbox items only an EXTMSG peer can take keep reconnecting to an older client (with backoff)
-		QList<QByteArray> c2c_peer_ids = (h.OutboxPeers().toSet() + sndfilequeues.keys().toSet()).toList();
+		QList<QByteArray> c2c_peer_ids = (to_set(h.OutboxPeers()) + to_set(sndfilequeues.keys())).values();
 
 		if (c2c_peer_ids.isEmpty())
 			return;
@@ -1985,8 +1990,8 @@ void SkyNet::handle_ext_groupinfo(QByteArray from, QDataStream &ds)
 	emit ContactsUpdated();
 
 	if (known)
-		emit GroupChanged(g.id, (g.members.toSet() - stored.members.toSet()).toList(),
-		                  (stored.members.toSet() - g.members.toSet()).toList());
+		emit GroupChanged(g.id, (to_set(g.members) - to_set(stored.members)).values(),
+		                  (to_set(stored.members) - to_set(g.members)).values());
 
 	if (!known && g.members.contains(me()) && g.members.contains(from))
 		send_syncreq(from, g.id);
@@ -2054,7 +2059,7 @@ void SkyNet::handle_ext_syncreq(QByteArray from, QDataStream &ds)
 	if (!group_id.isEmpty() && !is_member(group_id, me(), from, &g))
 		return;
 
-	have = have_list.toSet();
+	have = to_set(have_list);
 	L = h.GetMessages(group_id.isEmpty() ? from : group_id, !group_id.isEmpty(), since, 0xFFFFFFFF);
 
 	QList<QByteArray> records;
@@ -2207,10 +2212,10 @@ void SkyNet::do_SaveGroup(QByteArray group_id, QString name, QList<QByteArray> m
 		g.version = 1;
 	}
 
-	const QSet<QByteArray> before = notify.toSet();
+	const QSet<QByteArray> before = to_set(notify);
 
 	g.name = name;
-	g.members = (members.toSet() << me()).toList();
+	g.members = (to_set(members) << me()).values();
 	g.sig = sign(Groups::SignedData(g));
 
 	if (g.sig.isEmpty())
@@ -2223,10 +2228,10 @@ void SkyNet::do_SaveGroup(QByteArray group_id, QString name, QList<QByteArray> m
 	emit ContactsUpdated();
 
 	if (!before.isEmpty())
-		emit GroupChanged(g.id, (g.members.toSet() - before).toList(), (before - g.members.toSet()).toList());
+		emit GroupChanged(g.id, (to_set(g.members) - before).values(), (before - to_set(g.members)).values());
 
 	// removed members are told too, so they know they are out
-	notify = (notify.toSet() + g.members.toSet()).toList();
+	notify = (to_set(notify) + to_set(g.members)).values();
 	notify.removeAll(me());
 
 	for (int i = 0; i < notify.size(); i++)

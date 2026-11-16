@@ -24,7 +24,7 @@
 #include <QHBoxLayout>
 #include <QListWidget>
 #include <QMenu>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QMessageBox>
 #include <QInputDialog>
 
@@ -71,18 +71,20 @@ void NodesDialog::OK()
 
 void NodesDialog::Add()
 {
-	QRegExp rx("(.+):(\\d{1,5})");
+	QRegularExpression rx("\\A(.+):(\\d{1,5})\\z");
 	bool ok;
 	QString input = QInputDialog::getText(this, tr("Add New Node"),
 			tr("hostname:port (ex. picanode.example:com:2299 1.2.3.4:1234)"), QLineEdit::Normal, NULL, &ok);
 
-	if (ok && rx.exactMatch(input))
+	QRegularExpressionMatch m = rx.match(input);
+
+	if (ok && m.hasMatch())
 	{
 		Nodes nodes(config_dbname);
 		Nodes::NodeRecord nr;
 
-		nr.address = rx.cap(1);
-		nr.port = rx.cap(2).toUInt();
+		nr.address = m.captured(1);
+		nr.port = m.captured(2).toUInt();
 
 		nodes.Add(nr);
 		new QListWidgetItem(nr.address.append(':').append(QString::number(nr.port)), lwNodes);
@@ -95,12 +97,14 @@ void NodesDialog::Delete()
 	{
 		Nodes nodes(config_dbname);
 		Nodes::NodeRecord nr;
-		QRegExp rx("(.+):(\\d{1,5})");
+		QRegularExpression rx("\\A(.+):(\\d{1,5})\\z");
 
-		if (rx.exactMatch(lwNodes->currentItem()->text()))
+		QRegularExpressionMatch m = rx.match(lwNodes->currentItem()->text());
+
+		if (m.hasMatch())
 		{
-			nr.address = rx.cap(1);
-			nr.port = rx.cap(2).toUInt();
+			nr.address = m.captured(1);
+			nr.port = m.captured(2).toUInt();
 			nodes.Delete(nr);
 			delete lwNodes->takeItem(lwNodes->currentRow());
 		}

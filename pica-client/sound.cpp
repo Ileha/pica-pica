@@ -46,7 +46,7 @@ void Sound::play(const QString sndfile)
 		return;
 
 #if defined(__gnu_linux__)
-	QProcess::execute("aplay -q " + sndfile);
+	QProcess::execute("aplay", QStringList() << "-q" << sndfile);
 #endif
 #if defined(WIN32)
 	sndPlaySound(sndfile.toLatin1().constData(), SND_ASYNC | SND_NODEFAULT);

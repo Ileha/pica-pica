@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Pica Pica: a distributed, end-to-end encrypted messenger. `pica-node` (C, libevent, SQLite) relays traffic; `pica-client` (C++/Qt5) is the GUI client. GPL-3.0-only.
+Pica Pica: a distributed, end-to-end encrypted messenger. `pica-node` (C, libevent, SQLite) relays traffic; `pica-client` (C++/Qt6, also builds with Qt5) is the GUI client. GPL-3.0-only.
 
 ## Build
 
@@ -10,7 +10,7 @@ Autotools, from the repo root:
 
 ```sh
 autoreconf --install          # only for a fresh checkout without ./configure
-./configure                   # --disable-node / --disable-client, --with-qt=qt4|qt5 (qt5 default; Qt4 is no longer really buildable)
+./configure                   # --disable-node / --disable-client, --with-qt=qt6|qt5 (qt6 default, needs qt6-base-dev; Qt5 >= 5.14 still builds)
 make -j$(nproc)               # produces ./pica-node and ./pica-client/pica-client
 ```
 
@@ -37,8 +37,8 @@ The client can be smoke-tested headless with a throwaway home: `HOME=/tmp/x QT_Q
 
 ## MCP servers
 
-- **context7** — use before writing or changing code that calls a third-party API, instead of relying on memory. This code mixes old and new API generations (Qt 5 alongside Qt 4 leftovers, OpenSSL 1.0 `#if` branches next to 3.x), so check the version you need. Library IDs:
-  - Qt 5: `/qt/qtbase` (version `__branch__5.14`) or `/websites/doc_qt_io` — QDataStream, QSqlDatabase per-thread rules, QMetaObject::invokeMethod, signals/slots.
+- **context7** — use before writing or changing code that calls a third-party API, instead of relying on memory. This code mixes old and new API generations (Qt 6 code that must also compile with Qt 5.15, OpenSSL 1.0 `#if` branches next to 3.x), so check the version you need. Library IDs:
+  - Qt: `/qt/qtbase` (Qt 6; version `__branch__5.14` for the Qt5 side) or `/websites/doc_qt_io` — QDataStream, QSqlDatabase per-thread rules, QMetaObject::invokeMethod, signals/slots.
   - OpenSSL: `/openssl/openssl` (3.x) — EVP signing/verification, X509, SSL/DTLS contexts, deprecated RSA_* APIs.
   - libevent: `/websites/libevent_doc` — pica-node's event loop.
   - FFmpeg: `/websites/ffmpeg_doxygen` (versions 4.4/7.0/8.0) — `videodevice.cpp`, VAAPI/D3D12VA hardware acceleration.

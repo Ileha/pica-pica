@@ -6,7 +6,7 @@ Build-Depends: debhelper-compat (= 13),
  pkg-config,
  libssl-dev,
  zlib1g-dev,
- qtbase5-dev,
+ qt6-base-dev,
  libminiupnpc-dev,
  libevent-dev,
  libsqlite3-dev,
@@ -29,7 +29,7 @@ Homepage: http://picapica.im
 
 Package: pica-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, alsa-utils, libqt5sql5-sqlite
+Depends: ${shlibs:Depends}, ${misc:Depends}, alsa-utils, libqt6sql6-sqlite
 Recommends: va-driver-all
 Description: Pica Pica instant messaging client
  Client for secure distributed instant messaging system
