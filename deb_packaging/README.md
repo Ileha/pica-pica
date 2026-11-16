@@ -67,7 +67,7 @@ Ubuntu dropped i386 as an architecture after 18.04. What is left is a small
 multiarch compatibility subset with no installable base system: there is no
 i386 Ubuntu container image (`docker.io/i386/ubuntu` stops at `18.04`) and no
 i386 Qt to build against. Debian still carries i386 as a full architecture,
-including `qtbase5-dev`, so the 32 bit build is done there.
+including `qt6-base-dev`, so the 32 bit build is done there.
 
 ## The webrtc-audio-processing backport
 

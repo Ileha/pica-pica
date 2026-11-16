@@ -1,0 +1,2 @@
+QSqlQuery::value: not positioned on a valid record
+PASS tests/test_history (exit status: 0)

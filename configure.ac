@@ -32,10 +32,10 @@ AC_ARG_WITH([miniupnpc],
   [with_miniupnpc=yes])
 
 AC_ARG_WITH([qt],
-  [AS_HELP_STRING([--with-qt=qt4|qt5 qt5 is default],
-  [Select Qt version, 4 or 5])],
+  [AS_HELP_STRING([--with-qt=qt5|qt6 qt6 is default],
+  [Select Qt version, 5 or 6])],
   [qt_version=$withval],
-  [qt_version=qt5])
+  [qt_version=qt6])
 
 AS_IF([test "x$with_miniupnpc" != xno],
   [AC_CHECK_LIB([miniupnpc], [main],
@@ -44,11 +44,23 @@ AS_IF([test "x$with_miniupnpc" != xno],
       [miniupnpc test failed (--without-miniupnpc to disable)])],
   [])])
 
-AS_IF([test "x$qt_version" = xqt5],
+AS_IF([test "x$qt_version" = xqt6],
+	[
+	#QOpenGLWidget and QOpenGLShaderProgram are modules of their own in Qt 6
+	QT_MODULES="Qt6Core Qt6Gui Qt6Sql Qt6Network Qt6Widgets Qt6OpenGL Qt6OpenGLWidgets"
+	QT_UIC_NAMES="uic"
+	QT_MOC_NAMES="moc"
+	#Qt 6 keeps moc and uic out of PATH
+	QT_TOOLS_PATH="`${PKG_CONFIG:-pkg-config} --variable=libexecdir Qt6Core 2>/dev/null`$PATH_SEPARATOR$PATH"
+	CFLAGS="-fPIC $CFLAGS"
+	CXXFLAGS="-fPIC $CXXFLAGS"
+	],
+  [test "x$qt_version" = xqt5],
 	[
 	QT_MODULES="Qt5Core Qt5Gui Qt5Sql Qt5Network Qt5Widgets"
 	QT_UIC_NAMES="uic-qt5 uic5 uic"
 	QT_MOC_NAMES="moc-qt5 moc5 moc"
+	QT_TOOLS_PATH="$PATH"
 	CFLAGS="-fPIC $CFLAGS"
 	CXXFLAGS="-fPIC $CXXFLAGS"
 	],
@@ -57,6 +69,7 @@ AS_IF([test "x$qt_version" = xqt5],
 	QT_MODULES="QtCore QtGui QtSql QtNetwork"
 	QT_UIC_NAMES="uic-qt4 uic4 uic"
 	QT_MOC_NAMES="moc-qt4 moc4 moc"
+	QT_TOOLS_PATH="$PATH"
 	],
   [AC_MSG_ERROR(["Invalid Qt version"])])
 
@@ -177,8 +190,8 @@ AS_CASE([$host],
 )
 AC_SUBST([QT_DEPENDENCIES_CFLAGS])
 AC_SUBST([QT_DEPENDENCIES_LIBS])
-AC_CHECK_PROGS([UIC], [$QT_UIC_NAMES], [notfound])
-AC_CHECK_PROGS([MOC], [$QT_MOC_NAMES], [notfound])
+AC_PATH_PROGS([UIC], [$QT_UIC_NAMES], [notfound], [$QT_TOOLS_PATH])
+AC_PATH_PROGS([MOC], [$QT_MOC_NAMES], [notfound], [$QT_TOOLS_PATH])
 #fail if not found ...
 AS_IF([test "x$UIC" = xnotfound],[AC_MSG_ERROR(["uic program not found. Please install Qt development package"])])
 AS_IF([test "x$MOC" = xnotfound],[AC_MSG_ERROR(["moc program not found. Please install Qt development package"])])

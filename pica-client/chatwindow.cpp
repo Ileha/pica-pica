@@ -327,7 +327,7 @@ void ChatWindow::print_history(QList<History::HistoryRecord> H)
 		QDateTime dt;
 		int pos;
 
-		dt.setTime_t(r.timestamp);
+		dt.setSecsSinceEpoch(r.timestamp);
 		pos = draw_message(r.message, name_of(hist.Author(r)), dt, r.is_me ? color_me : color_peer,
 		                   !r.is_me ? mark_none : r.is_delivered ? mark_delivered : mark_pending);
 
@@ -462,19 +462,19 @@ void TextSend::keyPressEvent(QKeyEvent *e)
 
 void ChatWindow::show_history24h()
 {
-	print_history(hist.GetMessages(peer_id_, is_group_, QDateTime::currentDateTime().addDays(-1).toTime_t(),
-	                               QDateTime::currentDateTime().toTime_t()));
+	print_history(hist.GetMessages(peer_id_, is_group_, QDateTime::currentDateTime().addDays(-1).toSecsSinceEpoch(),
+	                               QDateTime::currentDateTime().toSecsSinceEpoch()));
 }
 
 void ChatWindow::show_history1w()
 {
-	print_history(hist.GetMessages(peer_id_, is_group_, QDateTime::currentDateTime().addDays(-7).toTime_t(),
-	                               QDateTime::currentDateTime().toTime_t()));
+	print_history(hist.GetMessages(peer_id_, is_group_, QDateTime::currentDateTime().addDays(-7).toSecsSinceEpoch(),
+	                               QDateTime::currentDateTime().toSecsSinceEpoch()));
 }
 
 void ChatWindow::show_historyAll()
 {
-	print_history(hist.GetMessages(peer_id_, is_group_, 0, QDateTime::currentDateTime().toTime_t()));
+	print_history(hist.GetMessages(peer_id_, is_group_, 0, QDateTime::currentDateTime().toSecsSinceEpoch()));
 }
 
 void ChatWindow::show_historySearch()

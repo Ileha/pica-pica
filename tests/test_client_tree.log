@@ -1,0 +1,7 @@
+[PASS] FIX1: lm->right->up updated after lm detached from parent
+[PASS] FIX2: ci->right->up updated when lm replaces ci
+[PASS] FIX3: ci->left->up updated when lm replaces ci
+[PASS] INTEGRITY: all ->up pointers consistent after multiple removals
+
+4 passed, 0 failed.
+PASS tests/test_client_tree (exit status: 0)

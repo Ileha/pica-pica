@@ -30,7 +30,7 @@
 #include <openssl/dh.h>
 
 #include <QFile>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QThread>
 
 #define REGEXOLD "CN = [0-9]+\\#([^\\#\\$&\"\'=\\(\\)\\\\/\\|`!<>\\{\\}\\[\\]\\+\r\n]+)"
@@ -154,19 +154,13 @@ static QString SubjectLine(X509 *cert)
 
 static QString NameFromSubjectLine(QString subject_line)
 {
-	QRegExp rxOld(REGEXOLD);
-	QRegExp rx(REGEXNEW);
-
 	QString name = subject_line;
+	QRegularExpressionMatch m = QRegularExpression(REGEXOLD).match(name);
 
-	if (name.contains(rxOld))
-	{
-		name = rxOld.cap(1);
-	}
-	else if (name.contains(rx))
-	{
-		name = rx.cap(1);
-	}
+	if (!m.hasMatch())
+		m = QRegularExpression(REGEXNEW).match(name);
+	if (m.hasMatch())
+		name = m.captured(1);
 
 	return name;
 }
