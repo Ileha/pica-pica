@@ -1546,7 +1546,7 @@ int PICA_new_listener(const struct PICA_acc *acc, const char *public_addr, int p
 	}
 
 	flag = 1;
-	setsockopt(lst->sck_listener, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
+	setsockopt(lst->sck_listener, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag));
 
 	IOCTLSETNONBLOCKINGSOCKET(lst->sck_listener, 1);
 
