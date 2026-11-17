@@ -48,12 +48,21 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: pica-pica-${{ matrix.name }}-amd64
-          path: /out/**/*.deb
+          name: pica-client-deb-${{ matrix.name }}-amd64
+          # libwebrtc*: the noble backport, which pica-client depends on
+          path: |
+            /out/**/pica-client_*.deb
+            /out/**/libwebrtc*.deb
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pica-node-deb-${{ matrix.name }}-amd64
+          path: /out/**/pica-node_*.deb
           retention-days: 7
 
   linux-client:
-    # build check only: distros without a .deb recipe, and the Qt 5 code path
+    # distros without a .deb recipe, and the Qt 5 code path
     name: Client ${{ matrix.name }} (${{ matrix.qt }})
     runs-on: ubuntu-latest
     container: ${{ matrix.image }}
@@ -77,13 +86,27 @@ jobs:
           pkg-config --exists webrtc-audio-processing-1 || pkg-config --exists webrtc-audio-processing-2 \
             || bash .github/build-webrtc-audio-processing.sh /opt/webrtc
 
-      - name: Build client and node
+      - name: Build client
         run: |
           export PKG_CONFIG_PATH=/opt/webrtc/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
           autoreconf --install --force
-          ./configure --with-qt=${{ matrix.qt }}
+          ./configure --with-qt=${{ matrix.qt }} --disable-node
           make -j$(nproc)
-          ./pica-node -V
+
+      - name: Collect
+        run: |
+          mkdir -p dist/share
+          cp pica-client/pica-client COPYING README dist/
+          cp dhparam4096.pem pica-client/picapica-icon-fly.png pica-client/picapica-icon-sit.png \
+             pica-client/picapica-snd-newmessage.wav dist/share/
+          # self-built webrtc-audio-processing is not in the distro; ship it next to the binary
+          if [ -d /opt/webrtc/lib ]; then mkdir -p dist/lib && cp -a /opt/webrtc/lib/*.so* dist/lib/; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pica-client-${{ matrix.name }}-${{ matrix.qt }}-amd64
+          path: dist/
+          retention-days: 7
 
   linux-node:
     name: Node ${{ matrix.name }}
@@ -124,8 +147,8 @@ jobs:
             dhparam4096.pem
           retention-days: 7
 
-  windows:
-    name: Windows x64 client (MSYS2 UCRT64)
+  windows-client:
+    name: Client windows-x64 (MSYS2 UCRT64)
     runs-on: windows-latest
     timeout-minutes: 90
     defaults:
@@ -184,8 +207,8 @@ jobs:
           path: dist/
           retention-days: 7
 
-  macos:
-    name: macOS client (.dmg)
+  macos-client:
+    name: Client macos (.dmg)
     runs-on: macos-latest
     timeout-minutes: 90
     steps:
@@ -222,4 +245,82 @@ jobs:
         with:
           name: pica-client-macos-${{ runner.arch }}
           path: PicaPicaMessenger.dmg
+          retention-days: 7
+
+  windows-node:
+    name: Node windows-x64 (MSYS2 UCRT64)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          cache: true
+          install: >-
+            autoconf automake libtool make
+          pacboy: >-
+            toolchain:p pkgconf:p openssl:p libevent:p sqlite3:p miniupnpc:p
+
+      - name: Build node
+        run: |
+          autoreconf --install --force
+          ./configure --disable-client
+          make -j$(nproc)
+          ./pica-node.exe -V
+
+      - name: Bundle
+        run: |
+          mkdir -p dist
+          cp pica-node.exe pica-node.conf nodelist.db dhparam4096.pem COPYING README dist/
+          for pass in 1 2 3; do
+            find dist -name '*.dll' -o -name '*.exe' | xargs ldd \
+              | awk '$3 ~ /^\/ucrt64\// {print $3}' | sort -u \
+              | xargs -r cp -n -t dist/
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pica-node-windows-x64
+          path: dist/
+          retention-days: 7
+
+  macos-node:
+    name: Node macos
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # sqlite comes from the macOS SDK
+      - name: Install dependencies
+        run: brew install autoconf automake libtool pkgconf openssl@3 libevent miniupnpc dylibbundler
+
+      - name: Build node
+        run: |
+          ssl=$(brew --prefix openssl@3)
+          export PKG_CONFIG_PATH="$ssl/lib/pkgconfig"
+          export CPPFLAGS="-I$ssl/include -I$(brew --prefix)/include" LDFLAGS="-L$ssl/lib -L$(brew --prefix)/lib"
+          autoreconf --install --force
+          ./configure --disable-client
+          make -j$(sysctl -n hw.ncpu)
+          ./pica-node -V
+
+      - name: Bundle
+        run: |
+          mkdir -p dist
+          cp pica-node pica-node.conf nodelist.db dhparam4096.pem COPYING README dist/
+          # copy the Homebrew dylibs next to the binary so it runs without Homebrew
+          dylibbundler -od -b -x dist/pica-node -d dist/libs/ -p @executable_path/libs/
+          dist/pica-node -V
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pica-node-macos-${{ runner.arch }}
+          path: dist/
           retention-days: 7
