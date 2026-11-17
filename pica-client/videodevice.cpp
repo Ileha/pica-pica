@@ -1980,7 +1980,7 @@ void VideoDevice::runTranscodeLoop(AVFormatContext *ifmt_ctx, AVStream *in_st)
 				{
 					QImage img(w, h, QImage::Format_RGB32);
 					uint8_t *dst[4] = {img.bits(), nullptr, nullptr, nullptr};
-					int dstStride[4] = {img.bytesPerLine(), 0, 0, 0};
+					int dstStride[4] = {static_cast<int>(img.bytesPerLine()), 0, 0, 0};
 
 					sws_scale(preview_sws, cam_frame->data, cam_frame->linesize, 0, cam_frame->height, dst, dstStride);
 					emit previewReady(img);

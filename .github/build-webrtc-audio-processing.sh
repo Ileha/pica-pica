@@ -16,7 +16,7 @@ cd "$work"
 curl -fsSL -o apm.tar.xz "https://freedesktop.org/software/pulseaudio/webrtc-audio-processing/webrtc-audio-processing-$VER.tar.xz"
 tar -xf apm.tar.xz
 cd "webrtc-audio-processing-$VER"
-meson setup build --prefix="$PREFIX" --libdir=lib --buildtype=release \
+CXXFLAGS="${CXXFLAGS:-} -include cstdint" meson setup build --prefix="$PREFIX" --libdir=lib --buildtype=release \
 	--wrap-mode=forcefallback -Dabseil-cpp:default_library=static \
 	-Dcpp_std=gnu++17 -Dabseil-cpp:cpp_std=gnu++17
 meson compile -C build
