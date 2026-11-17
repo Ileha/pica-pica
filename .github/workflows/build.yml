@@ -232,16 +232,18 @@ jobs:
         run: |
           ssl=$(brew --prefix openssl@3); sqlite=$(brew --prefix sqlite)
           export PKG_CONFIG_PATH="$HOME/webrtc/lib/pkgconfig:$ssl/lib/pkgconfig:$sqlite/lib/pkgconfig"
-          export CPPFLAGS="-I$ssl/include -I$sqlite/include" LDFLAGS="-L$ssl/lib -L$sqlite/lib -L$(brew --prefix)/lib"
+          export CPPFLAGS="-I$ssl/include -I$sqlite/include -I$(brew --prefix)/include" LDFLAGS="-L$ssl/lib -L$sqlite/lib -L$(brew --prefix)/lib -Wl,-rpath,$HOME/webrtc/lib"
           autoreconf --install --force
           ./configure --with-qt=qt6 --disable-node
           make -j$(sysctl -n hw.ncpu)
 
       - name: Bundle .dmg
         run: |
-          # webrtc lives outside Homebrew; let macdeployqt find it
-          export DYLD_LIBRARY_PATH=$HOME/webrtc/lib
-          make deploy QTDIR=$(brew --prefix qt)/share/qt
+          # webrtc's install name is @rpath/..., resolved through the -rpath set at link time
+          make deploy QTDIR=$(brew --prefix)/share/qt
+          # fail if anything still points outside the bundle
+          ! find PicaPicaMessenger.app -type f \( -perm +111 -o -name '*.dylib' \) -exec otool -L {} + \
+            | grep -E "^[[:space:]]+(/opt/homebrew|/usr/local|$HOME)/"
 
       - uses: actions/upload-artifact@v4
         with:

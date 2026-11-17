@@ -359,7 +359,6 @@ deploy: pica-client/pica-client
 	macdeployqt PicaPicaMessenger.app -verbose=3
 	macdeployqt PicaPicaMessenger.app -verbose=3
 	hdiutil create -srcfolder PicaPicaMessenger.app PicaPicaMessenger.dmg
-	hdiutil internet-enable -yes PicaPicaMessenger.dmg
 
 endif
 #####################################
