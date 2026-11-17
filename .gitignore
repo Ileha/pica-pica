@@ -168,3 +168,11 @@ compile_commands.json
 
 # runtime data
 /nodelist.db
+
+# automake test-harness output and test binaries
+/test-suite.log
+/tests/*.log
+/tests/*.trs
+/tests/test_client_tree
+/tests/test_core
+/tests/test_history
