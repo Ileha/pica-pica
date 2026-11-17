@@ -209,6 +209,8 @@ jobs:
 
   macos-client:
     name: Client macos (.dmg)
+    # macOS runners are scarce: only release pushes and manual runs
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/build/release'
     runs-on: macos-latest
     timeout-minutes: 90
     steps:
@@ -292,6 +294,8 @@ jobs:
 
   macos-node:
     name: Node macos
+    # macOS runners are scarce: only release pushes and manual runs
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/build/release'
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
