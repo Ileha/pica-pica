@@ -172,7 +172,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/msys64/opt/webrtc
-          key: webrtc-apm-${{ env.WEBRTC_APM_VER }}-windows-ucrt64
+          key: webrtc-apm-${{ env.WEBRTC_APM_VER }}-${{ hashFiles('.github/build-webrtc-audio-processing.sh') }}-windows-ucrt64
 
       - name: Build webrtc-audio-processing
         run: .github/build-webrtc-audio-processing.sh /opt/webrtc
@@ -221,7 +221,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/webrtc
-          key: webrtc-apm-${{ env.WEBRTC_APM_VER }}-${{ runner.os }}-${{ runner.arch }}
+          key: webrtc-apm-${{ env.WEBRTC_APM_VER }}-${{ hashFiles('.github/build-webrtc-audio-processing.sh') }}-${{ runner.os }}-${{ runner.arch }}
 
       - name: Build webrtc-audio-processing
         run: .github/build-webrtc-audio-processing.sh "$HOME/webrtc"

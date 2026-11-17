@@ -447,7 +447,8 @@ void AudioDevice::captureFFmpeg(const QString &driver)
 	av_dict_set(&opts, "channels", QString::number(kChannels).toUtf8().constData(), 0);
 
 	AVFormatContext *ifmt_ctx = nullptr;
-	int ret = avformat_open_input(&ifmt_ctx, deviceUtf8.constData(), ifmt, &opts);
+	int ret = avformat_open_input(&ifmt_ctx, deviceUtf8.constData(),
+		const_cast<AVInputFormat *>(ifmt), &opts); // FFmpeg 4.x takes it non-const
 	av_dict_free(&opts);
 	if (ret < 0)
 	{

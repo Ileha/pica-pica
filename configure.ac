@@ -295,7 +295,6 @@ AS_IF([test "x$enable_pulse" != "xno"], [
     ])
 ])
 
-AM_CONDITIONAL([PICA_PULSE], [test "x$PICA_PULSE_ENABLED" = "xyes"])
 
 #check for VAAPI libraries, unless explicitly disabled
 #libva is the accelerator itself, libva-drm opens it through a DRM render node,
@@ -386,6 +385,8 @@ AS_IF([test "x$TARGET_OS" != "xwindows" && test "x$enable_d3d12va" = "xyes"],
   [AC_MSG_ERROR(["Direct3D 12 acceleration was requested but it only exists on Windows"])])
 ])
 
+#outside the client block: automake conditionals must be defined on every configure run
+AM_CONDITIONAL([PICA_PULSE], [test "x$PICA_PULSE_ENABLED" = "xyes"])
 AM_CONDITIONAL([PICA_VAAPI], [test "x$PICA_VAAPI_ENABLED" = "xyes"])
 AM_CONDITIONAL([PICA_VAAPI_X11], [test "x$PICA_VAAPI_X11_ENABLED" = "xyes"])
 

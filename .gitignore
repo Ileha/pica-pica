@@ -176,3 +176,5 @@ compile_commands.json
 /tests/test_client_tree
 /tests/test_core
 /tests/test_history
+
+.github/logs

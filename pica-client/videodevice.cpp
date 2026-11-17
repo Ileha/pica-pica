@@ -1113,7 +1113,8 @@ static int openCamera(const AVInputFormat *ifmt, const QByteArray &url,
 	CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 #endif
 
-	int ret = avformat_open_input(ifmt_ctx, url.constData(), ifmt, &opts);
+	int ret = avformat_open_input(ifmt_ctx, url.constData(),
+		const_cast<AVInputFormat *>(ifmt), &opts); // FFmpeg 4.x takes it non-const
 	av_dict_free(&opts);
 
 	return ret;
