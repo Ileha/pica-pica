@@ -36,7 +36,7 @@ public:
 	explicit AudioVideoCallController(QObject *parent = nullptr);
 	~AudioVideoCallController();
 	// is call active (i.e. are voice/video packets exchanged now)
-	bool const isActive() {return is_active;}
+	bool const isActive() {return m_state == CallActive;}
 	void processCall();
 public slots:
 	void start_call(QByteArray peer_id);
@@ -45,8 +45,26 @@ public slots:
 	void call_accepted(QByteArray peer_id);
 	void call_rejected(QByteArray peer_id);
 	void call_hungup(QByteArray peer_id);
+	// the connection to the peer is gone, and whatever call it carried with it
+	void peer_disconnected(QByteArray peer_id);
 signals:
 private:
+	// There is one call at a time. While it is anything but CallIdle, calls
+	// coming in from other peers are rejected and the user cannot start
+	// another one.
+	enum CallState
+	{
+		// No call. The window may still be open: before "Call" is pressed, and
+		// after a call that failed, was rejected or was ended by the peer.
+		CallIdle,
+		// We are calling, the peer has not answered yet.
+		CallDialing,
+		// The peer is calling, we have not answered yet.
+		CallRinging,
+		// Answered - audio/video packets are being exchanged.
+		CallActive
+	};
+
 	CallWindow *callwindow;
 	AudioDevice *ringdevice;
 	AudioDevice *microphone;
@@ -55,7 +73,7 @@ private:
 	VideoDevice *cam;
 	// Decoding of the video stream received from the peer.
 	VideoDevice *remotevideo;
-	bool is_active;
+	CallState m_state;
 	QByteArray m_peer_id;
 	// Whether our camera is being sent. Fragments still queued from the capture
 	// thread when it is switched off must not follow the "video stopped" message.
@@ -87,6 +105,18 @@ private:
 	void setupEchoCanceller();
 	void startMicrophone();
 	void startPlayback();
+
+	// What identifies the call: who started it and who was called, one of them
+	// being m_peer_id and the other this account. The media devices only run
+	// for the call they were started for - see MediaCallSession.
+	QByteArray m_caller_id;
+	QByteArray m_callee_id;
+
+	// Bumped for every (re)start of a device. Each start opens its own
+	// session, so a restart stops the loop that is running and a start still
+	// queued from before can never run - see nextSessionKey().
+	quint32 m_mediaGen;
+	QByteArray nextSessionKey();
 
 	// Earpiece tones (ringback, busy, special information/unreachable),
 	// played through the "audio.playback_device" setting.
@@ -143,6 +173,13 @@ private:
 
 	void startVideoPipeline();
 	void stopVideoPipeline();
+
+	// The one way out of a call, whichever state it is in and whoever ends it:
+	// stops the tones and the media devices and leaves the state CallIdle.
+	// With notify_peer the peer is told as well, in the way the state calls
+	// for - a hangup for a call we started or answered, a reject for one that
+	// is still ringing here.
+	void finishCall(bool notify_peer);
 
 private slots:
 	// button handlers
